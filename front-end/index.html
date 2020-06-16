@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<!-- for reference, see:
+  -- https://dev.to/luispa/lets-try-react-without-nodejs-3a7
+  -- https://reactjs.org/docs/hello-world.html
+  -->
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>React Local</title>
+  <script type="application/javascript" src="https://unpkg.com/react@16.0.0/umd/react.production.min.js"></script>
+  <script type="application/javascript" src="https://unpkg.com/react-dom@16.0.0/umd/react-dom.production.min.js"></script>
+  <script type="application/javascript" src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+  <script type="application/javascript" src="https://unpkg.com/babel-standalone@6.26.0/babel.js"></script>
+
+  <!-- your custom CSS goes here: -->
+  <style>
+    em{font-weight: bolder}
+    mark{
+      color: red;
+      font-weight: bolder
+    }
+    #textboxid
+{
+    width:800px;
+    font-size:14pt;
+}
+
+  </style>
+
+  <!-- Maybe you want to use bootstrap to make it pretty? -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+
+
+  <script type="text/babel">
+  // Obtain the root
+  
+
+  class SearchApp extends React.Component {
+
+    constructor(){
+      super();
+      this.state={
+        page_size:0,
+        articles:[],
+        total_results:0,
+        query:'',
+        date:'',
+        offset:0,
+        english:false
+      };
+      this.processing = this.processing.bind(this);
+      this.restRequest = this.restRequest.bind(this);
+      this.updateQuery = this.updateQuery.bind(this);
+      this.previous = this.previous.bind(this);
+      this.next = this.next.bind(this);
+      this.English = this.English.bind(this);
+      this.updateDate=this.updateDate.bind(this);
+      this.submitDate=this.submitDate.bind(this);
+    }
+    
+
+
+    updateQuery = event=> {
+      let q = event.target.value;
+      this.setState({query:q});
+      this.restRequest(q);
+    } 
+
+
+
+
+    previous = () => {
+      let cur = this.state.offset;
+
+      if(cur != 0){
+        cur = cur - 10;
+      }
+
+      this.setState({offset:cur});
+
+      let q = this.state.query+"&"+"offset="+cur;
+
+      console.log("The offset now is "+ cur);
+
+      this.restRequest(q);
+    }
+
+
+
+
+    next = () => {
+    let cur = this.state.offset;
+
+    cur = cur + 10;
+
+    this.setState({offset:cur});
+
+    let q = this.state.query+"&"+"offset="+cur;
+
+    if(this.state.english==true){
+      q = q+"&language=en";
+    }
+
+    console.log(this.state.query);;
+
+    // console.log("The offset now is "+cur);
+
+    this.restRequest(q);
+
+    console.log(this.state.articles);
+
+    }
+
+
+
+    processing = json => {
+
+      let length = json.returned_results;
+      let article = json.articles;
+      let total_result = json.total_results;
+
+      this.setState({page_size:length});
+      this.setState({total_results:total_result});
+      this.setState({articles:article});
+
+      console.log(this.state.articles[0])
+
+    }
+
+    English = event => {
+
+      let cur = this.state.offset;
+
+      let q = this.state.query+"&"+"offset="+cur;
+
+      let english_checking = this.state.english;
+
+      if(english_checking==false){
+        q = q+"&language=en"
+        this.setState({english:true});
+      }
+
+      else{
+        this.setState({english:false});
+      }
+
+      this.restRequest(q);
+    }
+
+
+
+
+
+    updateDate = event =>{
+      
+      this.setState({date:event.target.value});
+
+    }
+
+
+    submitDate(){
+
+      let date = this.state.date;
+      let english_checking = this.state.english;
+      let cur = this.state.offset;
+      let q = this.state.query+"&"+"offset="+cur;
+
+
+      if(english_checking==true){
+        q = q+"&language=en";
+      }
+
+      if(date!=''){
+        q=q+"&date="+date;
+        this.restRequest(q);
+      }
+    }
+
+    
+
+
+
+    restRequest = input => fetch("http://ssa-hw2-backend.stevetarzia.com/api/search?query="+input)
+        .then(response => 
+          response.json()) /* asynchronously parse the response as JSON */
+        .then(json => this.processing(json)) /* do something with the resulting "json" object */
+        .catch(() => "bad query"/* do something if either the HTTP call or the JSON parsing fails */);
+
+    render() {
+      
+      let q = this.state.query;
+
+       return   <div>
+
+
+
+        <div class="grid-container">
+          <div class="grid-item">
+            <div class="page-header">
+              <h1 align="center">Elastic Search</h1>
+            </div>  
+           
+          </div>
+
+
+
+          <div class="grid-item"> 
+            <p>Number of articles in this page: {this.state.page_size}</p>
+          </div>
+
+
+          <div class="grid-item">
+        
+          
+            <form align="center">
+                      <label>
+                        Query
+                      </label>
+                        <div class="form-group">
+                        <input   id="textboxid" placeholder="Enter query" onChange={this.updateQuery}></input>
+                        </div>     
+            </form>
+
+            <div class="form-check" align= "right">
+              <input type="checkbox" class="form-check-input" onClick={this.English}></input>
+              <label class="form-check-label" for="exampleCheck1">English Only</label>
+            </div>
+            
+
+            <div align="right">
+            Date:  yyyy-mm-dd  
+            <input type="text" id = "date" name="name" placeholder="Enter date" onChange={this.updateDate}/>
+            <button  onClick={this.submitDate}>Submit</button>
+            </div>
+          </div>
+
+
+          <div class="grid-item">
+            <div class="panel panel-default" align="center">
+                    
+                        <p><a href="#" onClick={this.previous}>Previous page</a></p>
+                        <p><a href="#" onClick={this.next}>Next page</a></p>
+                        <p>Current page:  {this.state.offset/10}</p>
+                        <p>Total pages found:  {Math.round(this.state.total_results/10)}</p>      
+             </div>
+          </div>
+
+
+         
+
+
+
+
+          <div class="grid-item">
+            <h3 class="panel-title" align="center">Searching results</h3>
+            <h5 class="panel-title" align="center">( title , url , txt )</h5>
+          </div>
+      
+
+
+          <div class="grid-item">
+          
+          <div class="panel-body">
+                        {this.state.articles.map(item => (
+                          
+                          <ul>
+                          <li key={item.title}>Title:  {item.title}</li>
+                          <li><a href={item.url} target="_blank">{item.url}></a></li>
+                          <li key={item.txt}>{item.txt.slice(0,1000).match(/\w+|\s+|[^\s\w]+/g).map(
+                            function (word){
+                              if(q.toLowerCase().trim().includes(word.toLowerCase()) && word!= ' ')
+                              {return <mark >{word}</mark>;}
+                              else{return word;}
+                            })}</li>
+                            </ul>
+                          
+                        ))}
+            </div>
+          
+        </div>
+
+
+
+      
+        </div>             
+                  <div class ="container" align="center">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                        
+                      </div>
+                     
+                    </div>
+</div>
+
+
+
+   
+            </div>
+              ;
+    }
+  }
+
+  // Use the ReactDOM.render to show your component on the browser
+  ReactDOM.render(
+   <SearchApp />,
+    document.getElementById('root')
+  )
+</script>
+
+</body>
+
+</html>
