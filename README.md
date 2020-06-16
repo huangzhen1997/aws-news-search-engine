@@ -1,0 +1,1 @@
+#AWS-News-Search _engine Streamed 60,000 documents to ElasticSeach index,Periodically renewed the backend documents using Lambda and deployed on AWS.Built a stateless Java web application that can easily be run on any other machine, can handle many concurrent requests.
